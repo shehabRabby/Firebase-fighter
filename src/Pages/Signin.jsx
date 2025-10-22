@@ -3,7 +3,7 @@ import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaFacebook, FaGit } from "react-icons/fa";
 import logo from "../assets/logo.jpg";
 import userImage from "../assets/user.jpg"; // Your uploaded image
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { IoEyeOff } from "react-icons/io5";
 import { GithubAuthProvider, GoogleAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut } from "firebase/auth";
 import { auth } from "../firebase.config";
@@ -26,8 +26,23 @@ const Signin = () => {
     signInWithGithubPopupFunc,
     signOutUserFunc,
     sendPasswordResetEmailFunc,
+    setUser,
     user,
-    setUser} = useContext(AuthContext)
+    setLoading} = useContext(AuthContext)
+    
+
+
+    //location
+    const location = useLocation();
+    const from = location.state || "/";
+    const navigate = useNavigate();
+
+
+    if(user){
+      navigate('/')
+      return;
+    }
+
 
 
   //email sign Out here
@@ -39,6 +54,7 @@ const Signin = () => {
 
     signInWithEmailAndPasswordFunc(email,password)
     .then((res) => {
+      setLoading(false);
       //email verified
       if(!res.user.emailVerified){
         toast.error("Your Email is not verified")
@@ -47,6 +63,7 @@ const Signin = () => {
       console.log(res);
       setUser(res.user);
       toast.success("Sign in Successfull")
+      navigate(from)
     })
     .catch((e) => {
       console.log(e)
@@ -54,24 +71,33 @@ const Signin = () => {
     })
    } 
 
+
+
   //email sign out here
-   const handleSignout =()=>{
-    signOutUserFunc()
-    .then((res)=>{
-      toast.success("SignOut Successfull");
-      setUser(null);
-    })
-    .catch((e)=>{
-      console.log(e);
-      toast.error(e.message);
-    })
-   }
+  //  const handleSignout =()=>{
+  //   signOutUserFunc()
+  //   .then((res)=>{
+  //     // setLoading(false);
+  //     toast.success("SignOut Successfull");
+  //     navigate(from)
+  //     setUser(null);
+  //   })
+  //   .catch((e)=>{
+  //     console.log(e);
+  //     toast.error(e.message);
+  //   })
+  //  }
 
   //google sign in here 
-   const handleGoogleSignIn =()=>{
+  
+  
+  
+  const handleGoogleSignIn =()=>{
     signInWithEmailPopupFunc(auth,googleProvider)
     .then((res)=>{
+      setLoading(false);
       setUser(res.user);
+      navigate(from)
       toast.success("Google Sign In Successfull");
     })
     .catch((e)=>{
@@ -84,7 +110,9 @@ const Signin = () => {
    const handleGithubSignIn = () =>{
     signInWithGithubPopupFunc(auth,gitHubProvider)
     .then((res)=>{
+      setLoading(false);
       setUser(res.user);
+      navigate(from)
       toast.success("Github Sign In Successfull");
     })
     .catch((e)=>{
@@ -98,6 +126,7 @@ const Signin = () => {
     const email = emailRef.current.value;
     sendPasswordResetEmailFunc(email)
     .then((res)=>{
+      setLoading(false);
       toast.success("Check your email to reset password")
     })
     .catch((e)=>{
@@ -134,16 +163,6 @@ const Signin = () => {
         {/* Right Section (Login Card) */}
         <div className="w-full lg:w-1/2 p-6 sm:p-8 bg-gradient-to-br from-fuchsia-500 via-pink-400 to-purple-400 rounded-t-3xl lg:rounded-tr-none lg:rounded-l-3xl shadow-xl">
 
-          {user ? (
-            <div className="text-center space-y-3">
-              <img src={ user?.photoURL || logo} alt="" className="h-20 w-20 rounded-full mx-auto p-2" />
-              <h2 className="text-xl font-semibold">{user?.displayName}</h2>
-              <h2 className="text-white/80">{user?.email}</h2>
-              <button className="btn border bg-gradient-to-r from-fuchsia-200 via-pink-500 to-purple-100 flex items-center gap-2  hover:bg-gray-100 w-full" onClick={handleSignout} >Sign Out</button>
-
-            </div>
-
-          ):(
             <form onSubmit={handleSignin} className="flex flex-col gap-3">
               <h2 className="text-4xl font-bold text-center mb-4 text-white">SignIn</h2>
                {/* email  */}
@@ -189,8 +208,8 @@ const Signin = () => {
                <p className="text-center text-sm text-white mt-3">
                  New user? <Link to="/signup" className="font-bold hover:underline">Sign Up</Link>
                </p>
-          </form>
-          )}
+            </form>
+         
 
 
         </div>

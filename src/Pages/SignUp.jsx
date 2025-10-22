@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { auth } from "../firebase.config";
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 import { toast } from "react-toastify";
@@ -10,9 +10,10 @@ import { AuthContext } from "../Context/AuthContext";
 const SignUp = () => {
 
   const [show,setShow] = useState(false); //state for hide password 
+  const nagivate = useNavigate();
   const {createUserWithEmailAndPasswordFunc,
          sendEmailVerificationFunc,
-         updateProfileFunc} = useContext(AuthContext);
+         updateProfileFunc,setLoading,signOutUserFunc,setUser} = useContext(AuthContext);
 
 
   
@@ -22,6 +23,7 @@ const SignUp = () => {
     const photoURL = e.target.photo.value;
     const email = e.target.email.value;
     const password = e.target.password.value;
+    
     // console.log("Signup function enter :",name,photo,email,password);
     
 
@@ -42,8 +44,16 @@ const SignUp = () => {
         sendEmailVerificationFunc()
         .then(()=>{
           console.log(res);
-        toast.success("Signup Successfull, Check you email to validate your account");
+          setLoading(false);
         })
+        //signout
+         signOutUserFunc()
+                .then(()=>{
+                  toast.success("Signup Successfull, Check you email to validate your account");
+                  setUser(null);
+                  nagivate("/signin")
+                })
+
         .catch((e)=>{
         toast.error(e.message)
       })
