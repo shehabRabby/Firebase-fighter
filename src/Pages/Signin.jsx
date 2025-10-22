@@ -1,33 +1,49 @@
-import React, { use, useState } from "react";
+import React, { use, useContext, useRef, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
-import { FaEye, FaFacebook } from "react-icons/fa";
+import { FaEye, FaFacebook, FaGit } from "react-icons/fa";
 import logo from "../assets/logo.jpg";
 import userImage from "../assets/user.jpg"; // Your uploaded image
 import { Link } from "react-router";
 import { IoEyeOff } from "react-icons/io5";
-import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup, signOut } from "firebase/auth";
+import { GithubAuthProvider, GoogleAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut } from "firebase/auth";
 import { auth } from "../firebase.config";
 import { toast } from "react-toastify";
+import { BsGithub } from "react-icons/bs";
+import { AuthContext } from "../Context/AuthContext";
+
 
 const googleProvider = new GoogleAuthProvider();
-
+const gitHubProvider = new GithubAuthProvider();
 
 
 
 const Signin = () => {
    const [show,setShow] = useState(false); //state for hide password 
-   const [user,setUser] = useState(null); //user set local storage
+   const emailRef = useRef(null) // useRef hook for hold email reference
+   const {
+    signInWithEmailAndPasswordFunc,
+    signInWithEmailPopupFunc,
+    signInWithGithubPopupFunc,
+    signOutUserFunc,
+    sendPasswordResetEmailFunc,
+    user,
+    setUser} = useContext(AuthContext)
 
 
-
+  //email sign Out here
    const handleSignin =(e)=>{
     e.preventDefault();
     const email = e.target.email.value;
     const password = e.target.password.value;
     // console.log("Signup function enter :",email,password );
 
-    signInWithEmailAndPassword(auth,email,password)
+    signInWithEmailAndPasswordFunc(email,password)
     .then((res) => {
+      //email verified
+      if(!res.user.emailVerified){
+        toast.error("Your Email is not verified")
+        return;
+      }
       console.log(res);
       setUser(res.user);
       toast.success("Sign in Successfull")
@@ -38,9 +54,9 @@ const Signin = () => {
     })
    } 
 
-
+  //email sign out here
    const handleSignout =()=>{
-    signOut(auth)
+    signOutUserFunc()
     .then((res)=>{
       toast.success("SignOut Successfull");
       setUser(null);
@@ -51,10 +67,9 @@ const Signin = () => {
     })
    }
 
-
-  //fgoogle sign in here 
+  //google sign in here 
    const handleGoogleSignIn =()=>{
-    signInWithPopup(auth,googleProvider)
+    signInWithEmailPopupFunc(auth,googleProvider)
     .then((res)=>{
       setUser(res.user);
       toast.success("Google Sign In Successfull");
@@ -65,7 +80,31 @@ const Signin = () => {
     })
    }
 
+   //Github Signin Here
+   const handleGithubSignIn = () =>{
+    signInWithGithubPopupFunc(auth,gitHubProvider)
+    .then((res)=>{
+      setUser(res.user);
+      toast.success("Github Sign In Successfull");
+    })
+    .catch((e)=>{
+      console.log(e);
+      toast.error(e.message);
+    })
+   }
 
+   //forget password function
+   const handleForgetPassword =()=>{
+    const email = emailRef.current.value;
+    sendPasswordResetEmailFunc(email)
+    .then((res)=>{
+      toast.success("Check your email to reset password")
+    })
+    .catch((e)=>{
+      console.log(e);
+      toast.error(e.message);
+    })
+   }
 
 
 
@@ -106,11 +145,11 @@ const Signin = () => {
 
           ):(
             <form onSubmit={handleSignin} className="flex flex-col gap-3">
-              <h2 className="text-4xl font-bold text-center mb-4 text-white">Login</h2>
+              <h2 className="text-4xl font-bold text-center mb-4 text-white">SignIn</h2>
                {/* email  */}
                <div>
                  <label htmlFor="">Email</label>
-                 <input type="email" name="email" placeholder="Email" className="input input-bordered w-full border-gray-300 focus:ring-2 focus:ring-pink-500 text-black"/>
+                 <input ref={emailRef} type="email" name="email" placeholder="Email" className="input input-bordered w-full border-gray-300 focus:ring-2 focus:ring-pink-500 text-black"/>
                </div>
    
                {/* password  */}
@@ -121,9 +160,10 @@ const Signin = () => {
                  <span onClick={()=>{setShow(!show)}} className="absolute right-[8px] top-[40px] cursor-pointer">{show ? <FaEye></FaEye> : <IoEyeOff></IoEyeOff>}</span>
                </div>
    
-               <div className="text-right">
-                 <a className="text-sm text-white/80 hover:underline font-medium"> Forgot password?</a>
-               </div>
+                {/* forget password */}
+               <button type="button" onClick={handleForgetPassword} className="text-sm text-white/80 hover:underline font-medium cursor-pointer">
+                 Forgot password?
+               </button>
    
                <button type="submit" className="btn bg-white/30 hover:bg-white/50 text-white font-semibold w-full mt-2">
                  Login
@@ -135,6 +175,11 @@ const Signin = () => {
                {/* google sign in button */}
                <button onClick={handleGoogleSignIn} className="btn border text-gray-700 flex items-center gap-2 hover:bg-gray-100 w-full">
                  <FcGoogle className="text-xl" /> Sign in with Google
+               </button>
+
+               {/* Github sign in button */}
+               <button onClick={handleGithubSignIn} className="btn border text-gray-700 flex items-center gap-2 hover:bg-gray-100 w-full">
+                 <BsGithub className="text-xl" /> Continue with Github
                </button>
    
                <button className="btn border text-gray-700 flex items-center gap-2 hover:bg-gray-100 w-full">

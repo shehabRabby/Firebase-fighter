@@ -1,34 +1,56 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Link } from "react-router";
 import { auth } from "../firebase.config";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 import { toast } from "react-toastify";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
+import { AuthContext } from "../Context/AuthContext";
 
 const SignUp = () => {
 
   const [show,setShow] = useState(false); //state for hide password 
-
+  const {createUserWithEmailAndPasswordFunc,
+         sendEmailVerificationFunc,
+         updateProfileFunc} = useContext(AuthContext);
 
 
   
   const handleSignup=(e)=>{
     e.preventDefault();
+    const displayName = e.target.name.value;
+    const photoURL = e.target.photo.value;
     const email = e.target.email.value;
     const password = e.target.password.value;
-    console.log("Signup function enter :",email,password );
+    // console.log("Signup function enter :",name,photo,email,password);
+    
 
     //password validation use regex
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
-    if(!passwordRegex.test(password)){
-      toast.error("Password must be at least 6 characters long and include uppercase, lowercase, number, and special character.");
-      return;
-    }
+    // const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+    // if(!passwordRegex.test(password)){
+    //   toast.error("Password must be at least 6 characters long and include uppercase, lowercase, number, and special character.");
+    //   return;
+    // }
       
     //create user here 
-    createUserWithEmailAndPassword(auth,email,password)
+    createUserWithEmailAndPasswordFunc(email,password)
     .then((res) => {
+      //update profile
+      updateProfileFunc(displayName,photoURL)
+      .then(()=>{
+        //email verification
+        sendEmailVerificationFunc()
+        .then(()=>{
+          console.log(res);
+        toast.success("Signup Successfull, Check you email to validate your account");
+        })
+        .catch((e)=>{
+        toast.error(e.message)
+      })
+      })
+      .catch((e)=>{
+        toast.error(e.message)
+      })
       console.log(res);
       toast.success("Signup Successfull");
     })
@@ -116,6 +138,17 @@ const SignUp = () => {
          
          {/* from  */}
           <form onSubmit={handleSignup} className="flex flex-col gap-4">
+
+             <div>{/* Name  */}
+              <label htmlFor="">Name</label>
+              <input type="text" name="name" placeholder="Enter name here" className="w-full p-3 rounded-md bg-white text-gray-400  focus:outline-none"/>
+            </div>
+
+
+             <div>{/* Profile Photo */}
+              <label htmlFor="">Photo</label>
+              <input type="text" name="photo" placeholder="Photo URL here" className="w-full p-3 rounded-md bg-white text-gray-400  focus:outline-none"/>
+            </div>
 
             <div>{/* email  */}
               <label htmlFor="">Email</label>

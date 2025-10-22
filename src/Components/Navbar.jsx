@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import logo from "../assets/logo.jpg";
 import MyLink from './MyLink';
 import { Link } from 'react-router';
+import { AuthContext } from '../Context/AuthContext';
 
 const Navbar = () => {
+
+    const {user} = useContext(AuthContext); //context api er maddhone data neya
+    console.log(user)
+
+
     return (
         // <div className='bg-slate-900 py-2 border-b border-b-slate-950'>
         //     <div className="flex items-center justify-between w-11/12 mx-auto">
